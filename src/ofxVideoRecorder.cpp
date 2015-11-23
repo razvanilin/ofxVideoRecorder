@@ -866,6 +866,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         
         char vpip[128];
         int num = ofRandom(1024);
+		cout << "hello video" << endl;
         sprintf(vpip, "\\\\.\\pipe\\videoPipe%d", num);
         vPipename = convertCharArrayToLPCWSTR(vpip);
         
@@ -900,6 +901,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         
         char apip[128];
         int num = ofRandom(1024);
+		cout << "hello audio" << endl;
         sprintf(apip, "\\\\.\\pipe\\videoPipe%d", num);
         aPipename = convertCharArrayToLPCWSTR(apip);
         
@@ -1012,13 +1014,15 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
     else {
         cmd << ffmpegLocation << " -y ";
         if (bRecordAudio) {
+			cout << "hello audio 2" << endl;
             cmd << " -f s16le -acodec " << audioCodec << " -ar " << sampleRate << " -ac " << audioChannels << " -i " << "\\\\.\\pipe\\audioPipe";
         }
         else { // no audio stream
             cmd << " -an";
         }
         if (bRecordVideo) { // video input options and file
-            cmd << " -r " << fps << " -s " << w << "x" << h << " -f rawvideo -pix_fmt " << pixelFormat << " -i " << "\\\\.\\pipe\\videoPipe";
+			cout << "hello video 2" << endl;
+            cmd << " -r " << fps << " -s " << w << "x" << h << " -f rawvideo -pix_fmt " << pixelFormat << " -i " << convertWideToNarrow(vPipename);
         }
         else { // no video stream
             cmd << " -vn";
