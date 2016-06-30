@@ -226,9 +226,9 @@ bool ofxVideoRecorder::setup(string fname, int w, int h, float fps, int sampleRa
     }
     
     fileName = fname;
-    string absFilePath = ofFilePath::getAbsolutePath(fileName);
+    string absFilePath = "\"" + ofFilePath::getAbsolutePath(fileName) + "\"";
     
-    moviePath = ofFilePath::getAbsolutePath(fileName);
+    moviePath = "\"" + ofFilePath::getAbsolutePath(fileName) + "\"";
     
     stringstream outputSettings;
     outputSettings
