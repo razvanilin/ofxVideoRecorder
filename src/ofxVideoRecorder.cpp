@@ -942,7 +942,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         aCmd << " -i " << convertWideToNarrow(aPipename) << " -b:a " << audioBitrate << " " << outputString << "_atemp" << audioFileExt;
         
         ffmpegAudioThread.setup(aCmd.str());
-        ofLogNotice("FFMpeg Command") << aCmd.str() << endl;
+        ofLogNotice("FFMpeg Command1") << aCmd.str() << endl;
         
         fSuccess = ConnectNamedPipe(hAPipe, NULL);
         if (!fSuccess)
@@ -979,7 +979,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         vCmd << " -i " << convertWideToNarrow(vPipename) << " -vcodec " << videoCodec << " -b:v " << videoBitrate << " " << outputString << "_vtemp" << movFileExt;
         
         ffmpegVideoThread.setup(vCmd.str());
-        ofLogNotice("FFMpeg Command") << vCmd.str() << endl;
+        ofLogNotice("FFMpeg Command2") << vCmd.str() << endl;
         
         fSuccess = ConnectNamedPipe(hVPipe, NULL);
         if (!fSuccess)
@@ -1010,7 +1010,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         }
     }
     else {
-        cmd << ffmpegLocation << " -y ";
+        cmd << "\"\"" << ffmpegLocation << "\" -y ";
         if (bRecordAudio) {
             cmd << " -f s16le -acodec " << audioCodec << " -ar " << sampleRate << " -ac " << audioChannels << " -i " << "\\\\.\\pipe\\audioPipe";
         }
@@ -1018,7 +1018,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
             cmd << " -an";
         }
         if (bRecordVideo) { // video input options and file
-            cmd << " -r " << fps << " -s " << w << "x" << h << " -f rawvideo -pix_fmt " << pixelFormat << " -i " << "\\\\.\\pipe\\videoPipe";
+            cmd << " -r " << fps << " -s " << w << "x" << h << " -f rawvideo -pix_fmt " << pixelFormat << " -i " << convertWideToNarrow(vPipename);
         }
         else { // no video stream
             cmd << " -vn";
@@ -1027,9 +1027,9 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
             cmd << " -b:a " << audioBitrate;
         if (bRecordVideo)
             cmd << " -vcodec " << videoCodec << " -b:v " << videoBitrate;
-        cmd << " " << outputString << movFileExt;
+        cmd << " \"" << outputString << movFileExt << "\"\"";
         
-        ofLogNotice("FFMpeg Command") << cmd.str() << endl;
+        ofLogNotice("FFMpeg Command3") << cmd.str() << endl;
         
         ffmpegThread.setup(cmd.str()); // start ffmpeg thread, will wait for input pipes to be opened
         
@@ -1113,7 +1113,7 @@ bool ofxVideoRecorder::runCustomScript(string script)
     cmd << ffmpegLocation << " -y ";
     
     
-    ofLogNotice("FFMpeg Command") << script << endl;
+    ofLogNotice("FFMpeg Command4") << script << endl;
     ffmpegThread.setup(script);
     
     bIsInitialized = true;
