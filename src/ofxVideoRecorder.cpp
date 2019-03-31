@@ -619,7 +619,7 @@ void execThread::threadedFunction() {
 
 //===============================
 ofxVideoDataWriterThread::ofxVideoDataWriterThread() {
-    thread.setName("Video Thread");
+   // thread.setName("Video Thread");
 };
 
 void ofxVideoDataWriterThread::setup(HANDLE videoHandle_, lockFreeQueue<ofPixels *> * q) {
@@ -715,7 +715,7 @@ void ofxVideoDataWriterThread::setPipeNonBlocking() {
 
 //===============================
 ofxAudioDataWriterThread::ofxAudioDataWriterThread() {
-    thread.setName("Audio Thread");
+   // thread.setName("Audio Thread");
 };
 
 void ofxAudioDataWriterThread::setup(HANDLE audioHandle_, lockFreeQueue<audioFrameShort *> *q) {
