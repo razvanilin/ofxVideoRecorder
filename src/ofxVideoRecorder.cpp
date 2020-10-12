@@ -7,12 +7,22 @@
 //
 
 #include "ofxVideoRecorder.h"
+#if defined( TARGET_OSX ) || defined( TARGET_LINUX )
 #include <unistd.h>
+#endif
+#ifdef TARGET_WIN32
+#include <io.h>
+#include <chrono>
+#include <thread>
+#endif
 #include <fcntl.h>
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------
 int setNonBlocking(int fd){
+#ifdef TARGET_WIN32
+	return 0;
+#else
     int flags;
 
     /* If they have O_NONBLOCK, use the Posix way to do it */
@@ -25,6 +35,8 @@ int setNonBlocking(int fd){
     /* Otherwise, use the old way of doing it */
     flags = 1;
     return ioctl(fd, FIOBIO, &flags);
+#endif
+
 #endif
 }
 
@@ -290,6 +302,7 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         height = h;
         frameRate = fps;
 
+#ifndef TARGET_WIN32
         // recording video, create a FIFO pipe
         videoPipePath = ofFilePath::getAbsolutePath("ofxvrpipe" + ofToString(pipeNumber));
         if(!ofFile::doesFileExist(videoPipePath)){
@@ -297,6 +310,35 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
             system(cmd.c_str());
             // TODO: add windows compatable pipe creation (does ffmpeg work with windows pipes?)
         }
+#else
+		char vpip[128];
+		int num = ofRandom(1024);
+		sprintf(vpip, "\\\\.\\pipe\\videoPipe%d", num);
+		vPipename = convertCharArrayToLPCWSTR(vpip);
+
+		hVPipe = CreateNamedPipe(
+			vPipename, // name of the pipe
+			PIPE_ACCESS_OUTBOUND, // 1-way pipe -- send only
+			PIPE_TYPE_BYTE, // send data as a byte stream
+			1, // only allow 1 instance of this pipe
+			0, // outbound buffer defaults to system default
+			0, // no inbound buffer
+			0, // use default wait time
+			NULL // use default security attributes
+		);
+
+		if (!(hVPipe != INVALID_HANDLE_VALUE)) {
+			if (GetLastError() != ERROR_PIPE_BUSY)
+			{
+				ofLogError("Video Pipe") << "Could not open video pipe.";
+			}
+			// All pipe instances are busy, so wait for 5 seconds.
+			if (!WaitNamedPipe(vPipename, 5000))
+			{
+				ofLogError("Video Pipe") << "Could not open video pipe: 5 second wait timed out.";
+			}
+		}
+#endif
     }
 
     if(bRecordAudio) {
@@ -323,7 +365,15 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
         cmd << " -an";
     }
     if(bRecordVideo){ // video input options and file
-        cmd << " -r "<< fps << " -s " << w << "x" << h << " -f rawvideo -pix_fmt " << pixelFormat <<" -i \"" << videoPipePath << "\" -r " << fps;
+        cmd << " -r "<< fps << " -s " << w << "x" << h << " -f rawvideo -pix_fmt " << pixelFormat;
+#ifndef TARGET_WIN32
+		cmd <<" -i \"" << videoPipePath;
+#else
+		cmd << " -i \"" << vPipename;
+#endif // !TARGET_WIN32
+		
+		cmd << "\" -r " << fps;
+
         if (outputPixelFormat.length() > 0)
             cmd << " -pix_fmt " << outputPixelFormat;
     }
@@ -337,7 +387,11 @@ bool ofxVideoRecorder::setupCustomOutput(int w, int h, float fps, int sampleRate
 
     // wait until ffmpeg has started
     while (!ffmpegThread.isInitialized()) {
-        usleep(10);
+#ifndef TARGET_WIN32
+	usleep(10);
+#else
+	std::this_thread::sleep_for(std::chrono::microseconds(10));
+#endif // !TARGET_WIN32
     }
 
     if(bRecordAudio){

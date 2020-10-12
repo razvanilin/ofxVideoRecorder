@@ -171,6 +171,12 @@ private:
     string fileName;
     string moviePath;
     string videoPipePath, audioPipePath;
+	// Windows only
+	HANDLE hVPipe;
+	HANDLE hAPipe;
+	LPTSTR vPipename;
+	LPTSTR aPipename;
+	// ----
     string ffmpegLocation;
     string videoCodec, audioCodec, videoBitrate, audioBitrate, pixelFormat, outputPixelFormat;
     int width, height, sampleRate, audioChannels;
@@ -206,4 +212,30 @@ private:
     static void retirePipeNumber(int num);
 
     void outputFileComplete();
+
+	std::wstring convertNarrowToWide(const std::string& as) {
+		if (as.empty())    return std::wstring();
+		size_t reqLength = ::MultiByteToWideChar(CP_UTF8, 0, as.c_str(), (int)as.length(), 0, 0);
+		std::wstring ret(reqLength, L'\0');
+		::MultiByteToWideChar(CP_UTF8, 0, as.c_str(), (int)as.length(), &ret[0], (int)ret.length());
+		return ret;
+	}
+
+	wchar_t *convertCharArrayToLPCWSTR(const char* charArray)
+	{
+		wchar_t* wString = new wchar_t[4096];
+		MultiByteToWideChar(CP_ACP, 0, charArray, -1, wString, 4096);
+		return wString;
+	}
+
+	std::string convertWideToNarrow(const wchar_t *s, char dfault = '?',
+		const std::locale& loc = std::locale())
+	{
+		std::ostringstream stm;
+
+		while (*s != L'\0') {
+			stm << std::use_facet< std::ctype<wchar_t> >(loc).narrow(*s++, dfault);
+		}
+		return stm.str();
+	}
 };
